@@ -1,7 +1,6 @@
 import streamlit as st
 from PIL import Image, ImageEnhance
 import io
-import os
 
 def compress_image(image_file, quality):
     img = Image.open(image_file)
@@ -24,7 +23,10 @@ def main():
     uploaded_file = st.file_uploader("📤 Upload Image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        original_size = os.path.getsize(uploaded_file.name) / 1024 if hasattr(uploaded_file, 'name') else None
+        # Fix: Get original size in KB from in-memory buffer
+        uploaded_file.seek(0, io.SEEK_END)
+        original_size = uploaded_file.tell() / 1024  # in KB
+        uploaded_file.seek(0)
 
         col1, col2 = st.columns(2)
         with col1:
@@ -56,7 +58,7 @@ def main():
                 st.image(final_buffer, caption="Compressed & Enhanced Image", use_column_width=True)
 
             compressed_size = len(final_buffer.getvalue()) / 1024
-            st.markdown(f"💾 **Original size:** {original_size:.2f} KB" if original_size else "")
+            st.markdown(f"💾 **Original size:** {original_size:.2f} KB")
             st.markdown(f"📉 **Compressed size:** {compressed_size:.2f} KB")
 
             st.download_button(
